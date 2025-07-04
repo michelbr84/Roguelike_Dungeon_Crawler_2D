@@ -1,0 +1,209 @@
+using UnityEngine;
+using System.Collections.Generic;
+
+public class ProceduralMaze : MonoBehaviour
+{
+    [Header("Maze Settings")]
+    public int width = 10;
+    public int height = 10;
+    [Range(0f, 1f)]
+    public float wallProbability = 0.2f;
+
+    [Header("Movement Keys")]
+    public KeyCode upKey = KeyCode.UpArrow;
+    public KeyCode downKey = KeyCode.DownArrow;
+    public KeyCode leftKey = KeyCode.LeftArrow;
+    public KeyCode rightKey = KeyCode.RightArrow;
+    public KeyCode shootKey = KeyCode.Space;
+    public KeyCode teleportKey = KeyCode.T;
+
+    [Header("Axis Multipliers (1 = frente, -1 = trás)")]
+    [Tooltip("Horizontal: 1 = Para onde o jogador OLHA, -1 = Oposto ao que o jogador olha")]
+    public int horizontalMultiplier = -1;
+    [Tooltip("Vertical: 1 = Para onde o jogador OLHA, -1 = Oposto ao que o jogador olha")]
+    public int verticalMultiplier = 1;
+
+    [Header("Visual Settings")]
+    public Color backgroundColor = new Color(0.12f, 0.12f, 0.12f, 1f);
+    public Color wallColor = Color.gray;
+    public Color playerColor = Color.green;
+    public Color exitColor = Color.red;
+    public Color enemyColor = Color.magenta;
+    public Color bulletColor = Color.yellow;
+
+    // Texturas do Maze (Cell/Objects)
+    public Texture2D backgroundTexture;
+    public Texture2D wallTexture;
+    public Texture2D playerTexture;
+    public Texture2D exitTexture;
+    public Texture2D enemyTexture;
+    public Texture2D bulletTexture;
+
+    // Power-ups sprites (coletáveis no maze)
+    public Texture2D ammoTexture;
+    public Texture2D extraLifeTexture;
+    public Texture2D shieldTexture;
+
+    [Header("Power-Up Textures")]
+    public Texture2D doubleShotTexture;
+    public Texture2D tripleShotTexture;
+    public Texture2D speedBoostTexture;
+    public Texture2D invisibilityTexture;
+    public Texture2D teleportTexture;
+    public Texture2D scoreBoosterTexture;
+
+    // HUD Icons
+    [Header("HUD Icons")]
+    public Texture2D lifeIcon;
+    public Texture2D ammoIcon;
+    public Texture2D shieldIcon;
+
+    [Header("Enemies & Bullets")]
+    public int enemyCount = 3;
+    public float enemyMoveInterval = 0.8f;
+
+    // Maze
+    public int[,] maze;
+    public Vector2Int playerPos;
+    public Vector2Int exitPos;
+    public Vector2Int playerDir = Vector2Int.down;
+
+    // Enemies & Bullets
+    public List<Vector2Int> enemies = new List<Vector2Int>();
+    public float enemyMoveTimer = 0f;
+
+    public class Bullet
+    {
+        public Vector2Int pos;
+        public Vector2Int dir;
+        public Bullet(Vector2Int pos, Vector2Int dir) { this.pos = pos; this.dir = dir; }
+    }
+    public List<Bullet> bullets = new List<Bullet>();
+
+    // PowerUps
+    public List<PowerUp> powerUps = new List<PowerUp>();
+
+    // Score & Level & Record
+    [HideInInspector] public int score = 0;
+    [HideInInspector] public int currentLevel = 1;
+    [HideInInspector] public int scoreRecord = 0;
+
+    // VIDAS
+    [HideInInspector] public int lives = 3;
+    public int startingLives = 3;
+
+    // MUNIÇÃO
+    [HideInInspector] public int ammo = 10;
+    public int startingAmmo = 10;
+    public int maxAmmo = 25;
+
+    // --- ESCUDO (Shield) ---
+    [Header("Shield Power-Up")]
+    [HideInInspector] public bool shieldActive = false;
+    [HideInInspector] public float shieldTimer = 0f;
+    public float shieldDuration = 5f;
+
+    // --- DOUBLE SHOT ---
+    [Header("Double Shot Power-Up")]
+    [HideInInspector] public bool doubleShotActive = false;
+    [HideInInspector] public float doubleShotTimer = 0f;
+    public float doubleShotDuration = 7f;
+
+    // --- TRIPLE SHOT ---
+    [Header("Triple Shot Power-Up")]
+    [HideInInspector] public bool tripleShotActive = false;
+    [HideInInspector] public float tripleShotTimer = 0f;
+    public float tripleShotDuration = 5f;
+
+    // --- SPEED BOOST ---
+    [Header("Speed Boost Power-Up")]
+    [HideInInspector] public bool speedBoostActive = false;
+    [HideInInspector] public float speedBoostTimer = 0f;
+    public float speedBoostDuration = 6f;
+    public float speedBoostMultiplier = 1.7f;
+
+    // --- INVISIBILITY ---
+    [Header("Invisibility Power-Up")]
+    [HideInInspector] public bool invisibilityActive = false;
+    [HideInInspector] public float invisibilityTimer = 0f;
+    public float invisibilityDuration = 5f;
+
+    // --- TELEPORT ---
+    [Header("Teleport Power-Up")]
+    [HideInInspector] public bool teleportAvailable = false;
+
+    // --- SCORE BOOSTER ---
+    [Header("Score Booster Power-Up")]
+    [HideInInspector] public bool scoreBoosterActive = false;
+    [HideInInspector] public float scoreBoosterTimer = 0f;
+    public float scoreBoosterDuration = 8f;
+    public float scoreBoosterMultiplier = 2f;
+
+    // Efeito visual breve ao coletar power-up
+    [HideInInspector] public float powerUpFlashTimer = 0f;
+    public float powerUpFlashDuration = 0.3f;
+
+    // GameState integration
+    public static GameState gameState = GameState.Menu;
+    private static ProceduralMaze instance;
+
+    // --- Multiplicadores de Dificuldade ---
+    [Header("Multiplicadores de Dificuldade")]
+    public float enemySpeedMultiplier = 1.0f;
+    public float powerUpSpawnRate = 1.0f;
+    public float playerSpeedMultiplier = 1.0f;
+    public float bulletSpeedMultiplier = 1.0f;
+
+    void Awake()
+    {
+        instance = this;
+    }
+
+    void Start()
+    {
+        MazeInitialization.InitializeGame(this);
+    }
+
+    void Update()
+    {
+        if (gameState == GameState.Playing)
+        {
+            MazeInputHandler.HandleGameInput(this);
+            MazeGameplayLoop.UpdateGameplay(this);
+        }
+        else if (gameState == GameState.Menu)
+        {
+            MazeInputHandler.HandleMenuInput();
+        }
+        else if (gameState == GameState.GameOver)
+        {
+            MazeInputHandler.HandleGameOverInput();
+        }
+    }
+
+    void OnGUI()
+    {
+        if (gameState == GameState.Menu)
+        {
+            MazeMenu.DrawMenu(scoreRecord, lives);
+        }
+        else if (gameState == GameState.GameOver)
+        {
+            MazeMenu.DrawGameOver(score, scoreRecord, lives);
+        }
+        else // GameState.Playing
+        {
+            MazeRendering.DrawMaze(this);
+            MazeHUD.DrawHUD(this);
+        }
+    }
+
+    // *** DELEGAÇÃO PARA MazeGameLoop.cs ***
+    public static void StartGameFromMenu() => MazeGameLoop.StartGameFromMenu();
+    public static void RestartGameFromGameOver() => MazeGameLoop.RestartGameFromGameOver();
+    public void NextLevel() => MazeGameLoop.NextLevel(this);
+    public void LoseLifeAndRespawn() => MazeGameLoop.LoseLifeAndRespawn(this);
+    public void GameOver() => MazeGameLoop.GameOver(this);
+    public void CollectPowerUp(PowerUpType type) => MazeGameLoop.CollectPowerUp(this, type);
+}
+ 
