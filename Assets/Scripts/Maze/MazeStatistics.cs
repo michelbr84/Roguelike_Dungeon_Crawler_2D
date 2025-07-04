@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.IO;
 
 public static class MazeStatistics
 {
@@ -384,5 +385,25 @@ public static class MazeStatistics
         if (playerStats == null) return "";
         
         return JsonUtility.ToJson(playerStats, true);
+    }
+
+    // Exportar estatísticas para JSON
+    public static void ExportStatsToJson(string path)
+    {
+        if (playerStats == null) return;
+        string json = JsonUtility.ToJson(playerStats, true);
+        File.WriteAllText(path, json);
+    }
+    // Importar estatísticas de JSON
+    public static void ImportStatsFromJson(string path)
+    {
+        if (!File.Exists(path)) return;
+        string json = File.ReadAllText(path);
+        var stats = JsonUtility.FromJson<PlayerStats>(json);
+        if (stats != null)
+        {
+            playerStats = stats;
+            SavePlayerStats();
+        }
     }
 } 

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic; // Added for List
 
 public class AudioManager : MonoBehaviour
 {
@@ -26,10 +27,15 @@ public class AudioManager : MonoBehaviour
 
     [Header("Music")]
     public AudioClip backgroundMusic;
-
+    public AudioClip[] additionalMusic; // Músicas adicionais para variedade
+    
     [Header("Audio Sources")]
     public AudioSource sfxSource;
     public AudioSource musicSource;
+    
+    // Sistema de múltiplas músicas
+    private int currentMusicIndex = 0;
+    private AudioClip[] allMusic;
 
     private void Awake()
     {
@@ -43,6 +49,33 @@ public class AudioManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+        
+        // Inicializar array de músicas
+        InitializeMusicArray();
+    }
+    
+    private void InitializeMusicArray()
+    {
+        // Combinar música principal com músicas adicionais
+        List<AudioClip> musicList = new List<AudioClip>();
+        if (backgroundMusic != null)
+            musicList.Add(backgroundMusic);
+        
+        if (additionalMusic != null)
+        {
+            foreach (var music in additionalMusic)
+            {
+                if (music != null)
+                    musicList.Add(music);
+            }
+        }
+        
+        allMusic = musicList.ToArray();
+        
+        // Carregar índice salvo
+        currentMusicIndex = PlayerPrefs.GetInt("CurrentMusicIndex", 0);
+        if (currentMusicIndex >= allMusic.Length)
+            currentMusicIndex = 0;
     }
 
     private void Start()
@@ -58,11 +91,68 @@ public class AudioManager : MonoBehaviour
 
     public void PlayMusic()
     {
-        if (backgroundMusic && musicSource)
+        if (allMusic != null && allMusic.Length > 0 && musicSource)
         {
-            musicSource.clip = backgroundMusic;
+            musicSource.clip = allMusic[currentMusicIndex];
             musicSource.loop = true;
             musicSource.Play();
+        }
+    }
+    
+    // Trocar para próxima música
+    public void NextMusic()
+    {
+        if (allMusic != null && allMusic.Length > 1)
+        {
+            currentMusicIndex = (currentMusicIndex + 1) % allMusic.Length;
+            PlayerPrefs.SetInt("CurrentMusicIndex", currentMusicIndex);
+            PlayerPrefs.Save();
+            PlayMusic();
+        }
+    }
+    
+    // Trocar para música anterior
+    public void PreviousMusic()
+    {
+        if (allMusic != null && allMusic.Length > 1)
+        {
+            currentMusicIndex = (currentMusicIndex - 1 + allMusic.Length) % allMusic.Length;
+            PlayerPrefs.SetInt("CurrentMusicIndex", currentMusicIndex);
+            PlayerPrefs.Save();
+            PlayMusic();
+        }
+    }
+    
+    // Trocar para música específica
+    public void SetMusic(int index)
+    {
+        if (allMusic != null && index >= 0 && index < allMusic.Length)
+        {
+            currentMusicIndex = index;
+            PlayerPrefs.SetInt("CurrentMusicIndex", currentMusicIndex);
+            PlayerPrefs.Save();
+            PlayMusic();
+        }
+    }
+    
+    // Obter informações sobre músicas
+    public int GetCurrentMusicIndex() => currentMusicIndex;
+    public int GetMusicCount() => allMusic != null ? allMusic.Length : 0;
+    public string GetCurrentMusicName()
+    {
+        if (allMusic != null && currentMusicIndex < allMusic.Length && allMusic[currentMusicIndex] != null)
+            return allMusic[currentMusicIndex].name;
+        return "Nenhuma música";
+    }
+    
+    // Trocar música baseada na dificuldade
+    public void SetMusicByDifficulty(int difficultyLevel)
+    {
+        if (allMusic != null && allMusic.Length > 0)
+        {
+            // Música mais intensa para dificuldades maiores
+            int musicIndex = Mathf.Clamp(difficultyLevel - 1, 0, allMusic.Length - 1);
+            SetMusic(musicIndex);
         }
     }
     

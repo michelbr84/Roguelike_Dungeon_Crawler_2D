@@ -142,7 +142,36 @@ public static class MazeSettingsMenu
             currentState = SettingsState.Controls;
         }
         
-        buttonY += buttonSpacing + 20;
+        buttonY += buttonSpacing + 10;
+        // Exportar/Importar Configurações
+        if (GUI.Button(new Rect(menuX + 50, buttonY, (menuWidth - 110) / 2, buttonHeight - 10), "⬆ Exportar Config.", buttonStyle))
+        {
+            string path = System.IO.Path.Combine(Application.persistentDataPath, "settings.json");
+            MazeSaveSystem.ExportSettingsToJson(path);
+            MazeHUD.ShowStatusMessage($"Configurações exportadas para {path}");
+        }
+        if (GUI.Button(new Rect(menuX + 60 + (menuWidth - 110) / 2, buttonY, (menuWidth - 110) / 2, buttonHeight - 10), "⬇ Importar Config.", buttonStyle))
+        {
+            string path = System.IO.Path.Combine(Application.persistentDataPath, "settings.json");
+            MazeSaveSystem.ImportSettingsFromJson(path);
+            MazeHUD.ShowStatusMessage($"Configurações importadas de {path}");
+        }
+        buttonY += buttonHeight;
+        // Exportar/Importar Estatísticas
+        if (GUI.Button(new Rect(menuX + 50, buttonY, (menuWidth - 110) / 2, buttonHeight - 10), "⬆ Exportar Stats", buttonStyle))
+        {
+            string path = System.IO.Path.Combine(Application.persistentDataPath, "stats.json");
+            MazeStatistics.ExportStatsToJson(path);
+            MazeHUD.ShowStatusMessage($"Estatísticas exportadas para {path}");
+        }
+        if (GUI.Button(new Rect(menuX + 60 + (menuWidth - 110) / 2, buttonY, (menuWidth - 110) / 2, buttonHeight - 10), "⬇ Importar Stats", buttonStyle))
+        {
+            string path = System.IO.Path.Combine(Application.persistentDataPath, "stats.json");
+            MazeStatistics.ImportStatsFromJson(path);
+            MazeHUD.ShowStatusMessage($"Estatísticas importadas de {path}");
+        }
+        buttonY += buttonHeight + 10;
+        
         if (GUI.Button(new Rect(menuX + 50, buttonY, menuWidth - 100, buttonHeight), "❌ Fechar", buttonStyle))
         {
             ToggleMenu();
@@ -187,11 +216,31 @@ public static class MazeSettingsMenu
         currentSettings.sfxVolume = GUI.HorizontalSlider(new Rect(menuX + 220, sliderY + 10, 150, 20), currentSettings.sfxVolume, 0f, 1f);
         GUI.Label(new Rect(menuX + 380, sliderY, 50, sliderHeight), $"{Mathf.RoundToInt(currentSettings.sfxVolume * 100)}%", labelStyle);
         
-        // Botões
+        sliderY += sliderSpacing;
+        
+        // Controles de música
+        GUI.Label(new Rect(menuX + 20, sliderY, 200, sliderHeight), "Música Atual", labelStyle);
+        string musicName = AudioManager.Instance ? AudioManager.Instance.GetCurrentMusicName() : "Nenhuma";
+        GUI.Label(new Rect(menuX + 220, sliderY, 150, sliderHeight), musicName, labelStyle);
+        
+        sliderY += sliderSpacing;
+        
+        // Botões de controle de música
         GUIStyle buttonStyle = new GUIStyle();
         buttonStyle.fontSize = 16;
         buttonStyle.normal.textColor = Color.white;
         buttonStyle.alignment = TextAnchor.MiddleCenter;
+        
+        if (GUI.Button(new Rect(menuX + 220, sliderY, 70, 30), "◀ Anterior", buttonStyle))
+        {
+            if (AudioManager.Instance) AudioManager.Instance.PreviousMusic();
+        }
+        if (GUI.Button(new Rect(menuX + 300, sliderY, 70, 30), "Próxima ▶", buttonStyle))
+        {
+            if (AudioManager.Instance) AudioManager.Instance.NextMusic();
+        }
+        
+        // Botões
         
         float buttonY = menuY + menuHeight - 80;
         
@@ -367,5 +416,11 @@ public static class MazeSettingsMenu
         {
             currentState = SettingsState.Main;
         }
+    }
+    
+    // Método para compatibilidade com ProceduralMaze
+    public static void RenderSettingsMenu(ProceduralMaze maze)
+    {
+        RenderMenu();
     }
 } 

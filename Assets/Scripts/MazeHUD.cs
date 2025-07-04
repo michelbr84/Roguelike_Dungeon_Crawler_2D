@@ -191,6 +191,44 @@ public static class MazeHUD
         GUI.color = oldColor;
         y += 36;
         
+        // Mostrar classe atual
+        GUI.color = Color.cyan;
+        GUI.Label(new Rect(rightX - labelWidth, y, labelWidth, 40), $"Classe: {MazeCharacterSystem.GetCurrentClassName()}", style);
+        GUI.color = oldColor;
+        y += 36;
+        
+        // Mostrar pet ativo
+        var activePet = MazePetSystem.GetActivePet();
+        if (activePet != null && activePet.isActive)
+        {
+            GUI.color = MazePetSystem.GetPetTypeColor(activePet.type);
+            GUI.Label(new Rect(rightX - labelWidth, y, labelWidth, 40), $"Pet: {activePet.name} Lv.{activePet.level}", style);
+            GUI.color = oldColor;
+            y += 36;
+        }
+        
+        // Mostrar clima atual
+        var currentWeather = MazeWeatherSystem.GetCurrentWeather();
+        if (currentWeather.type != MazeWeatherSystem.WeatherType.Clear)
+        {
+            GUI.color = MazeWeatherSystem.GetWeatherTypeColor(currentWeather.type);
+            float timeRemaining = MazeWeatherSystem.GetWeatherTimeRemaining();
+            GUI.Label(new Rect(rightX - labelWidth, y, labelWidth, 40), $"Clima: {currentWeather.name} ({timeRemaining:0}s)", style);
+            GUI.color = oldColor;
+            y += 36;
+        }
+        
+        // Mostrar evento ativo
+        var activeEvent = MazeEventSystem.GetActiveEvent();
+        if (activeEvent != null && activeEvent.isActive)
+        {
+            GUI.color = MazeEventSystem.GetEventTypeColor(activeEvent.type);
+            float eventTimeRemaining = MazeEventSystem.GetEventTimeRemaining();
+            GUI.Label(new Rect(rightX - labelWidth, y, labelWidth, 40), $"Evento: {activeEvent.name} ({eventTimeRemaining:0}s)", style);
+            GUI.color = oldColor;
+            y += 36;
+        }
+        
         GUI.Label(new Rect(rightX - labelWidth, y, labelWidth + 60, 40), $"Record: {mazeObj.scoreRecord}", style); y += 36;
 
         // --- Mensagem de status centralizada ---
@@ -232,74 +270,27 @@ public static class MazeHUD
     // Desenhar missões ativas
     public static void DrawMissions()
     {
+        // Implementação do sistema de missões
         var missions = MazeMissions.GetActiveMissions();
-        if (missions.Count == 0) return;
-        
-        GUIStyle missionStyle = new GUIStyle();
-        missionStyle.fontSize = 16;
-        missionStyle.normal.textColor = Color.white;
-        missionStyle.alignment = TextAnchor.UpperLeft;
-        
-        GUIStyle progressStyle = new GUIStyle(missionStyle);
-        progressStyle.fontSize = 14;
-        progressStyle.normal.textColor = Color.yellow;
-        
-        int x = 10;
-        int y = Screen.height - 200;
-        int width = 300;
-        int height = 20;
-        
-        // Título
-        GUIStyle titleStyle = new GUIStyle(missionStyle);
-        titleStyle.fontSize = 18;
-        titleStyle.normal.textColor = Color.cyan;
-        GUI.Label(new Rect(x, y, width, height), "MISSÕES:", titleStyle);
-        y += 25;
-        
-        foreach (var mission in missions)
+        if (missions != null && missions.Count > 0)
         {
-            if (!mission.isActive) continue;
-            
-            // Descrição da missão
-            string missionText = mission.description;
-            if (mission.completed)
+            GUIStyle missionStyle = new GUIStyle(GUI.skin.label);
+            missionStyle.fontSize = 16;
+            missionStyle.normal.textColor = Color.cyan;
+            missionStyle.alignment = TextAnchor.UpperLeft;
+
+            int y = 10;
+            foreach (var mission in missions)
             {
-                missionText += " ✓";
-                missionStyle.normal.textColor = Color.green;
-            }
-            else
-            {
-                missionStyle.normal.textColor = Color.white;
-            }
-            
-            GUI.Label(new Rect(x, y, width, height), missionText, missionStyle);
-            y += 20;
-            
-            // Barra de progresso
-            if (!mission.completed)
-            {
-                float progress = mission.GetProgress();
-                
-                // Fundo da barra
-                GUI.color = Color.gray;
-                GUI.DrawTexture(new Rect(x, y, width, 6), Texture2D.whiteTexture);
-                
-                // Progresso
-                GUI.color = Color.green;
-                GUI.DrawTexture(new Rect(x, y, width * progress, 6), Texture2D.whiteTexture);
-                
-                // Texto de progresso
-                GUI.color = Color.yellow;
-                GUI.Label(new Rect(x, y + 8, width, height), $"{mission.current}/{mission.target}", progressStyle);
-                
-                y += 30;
-            }
-            else
-            {
-                y += 10;
+                GUI.Label(new Rect(10, y, 300, 20), mission.description, missionStyle);
+                y += 20;
             }
         }
-        
-        GUI.color = Color.white;
+    }
+    
+    // Método para compatibilidade com ProceduralMaze
+    public static void RenderHUD(ProceduralMaze maze)
+    {
+        DrawHUD(maze);
     }
 }

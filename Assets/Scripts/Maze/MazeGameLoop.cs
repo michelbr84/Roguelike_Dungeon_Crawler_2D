@@ -25,6 +25,11 @@ public static class MazeGameLoop
         // Atualizar missões para novo nível
         MazeMissions.ResetMissionsForNewLevel();
         MazeMissions.GenerateMissions(instance.currentLevel);
+        
+        // Gerar clima e eventos para o novo nível
+        MazeWeatherSystem.GenerateRandomWeather();
+        MazeEventSystem.GenerateRandomWeather();
+        
         instance.bullets.Clear();
         ProceduralMaze.gameState = GameState.Playing;
         
@@ -106,8 +111,16 @@ public static class MazeGameLoop
         // Registrar estatísticas
         MazeStatistics.OnGameLost();
         
+        // Salvar score no ranking local
+        if (maze.score > 0)
+            MazeSaveSystem.AddScoreToRanking(maze.score);
+        
         // Salvar jogo ao perder
         MazeSaveSystem.SaveGame(maze);
+        
+        // Salvar estado dos novos sistemas
+        MazeWeatherSystem.SaveWeatherState();
+        MazeEventSystem.SaveEventState();
     }
 
     public static void CollectPowerUp(ProceduralMaze maze, PowerUpType type)

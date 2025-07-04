@@ -164,6 +164,12 @@ public static class MazeDifficultySystem
         {
             // Desabilitar boss
         }
+        
+        // Trocar música baseada na dificuldade
+        if (AudioManager.Instance)
+        {
+            AudioManager.Instance.SetMusicByDifficulty((int)currentDifficulty.level);
+        }
     }
     
     // Obter configurações atuais

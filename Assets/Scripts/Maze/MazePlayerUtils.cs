@@ -50,10 +50,14 @@ public static class MazePlayerUtils
             inputDir.y * mazeObj.verticalMultiplier
         );
 
+        // Aplicar modificadores de clima e eventos
+        float movementModifier = MazeWeatherSystem.GetMovementModifier() * MazeEventSystem.GetPlayerSpeedModifier();
+        float speedBoostMultiplier = mazeObj.speedBoostMultiplier * movementModifier;
+        
         // Speed boost: move duas vezes se ativo
         if (mazeObj.speedBoostActive && inputDir != Vector2Int.zero)
         {
-            for (int i = 0; i < Mathf.RoundToInt(mazeObj.speedBoostMultiplier); i++)
+            for (int i = 0; i < Mathf.RoundToInt(speedBoostMultiplier); i++)
             {
                 Vector2Int newPosBoost = mazeObj.playerPos + moveDir;
                 if (IsValid(mazeObj, newPosBoost) && mazeObj.maze[newPosBoost.x, newPosBoost.y] == 0)
@@ -198,6 +202,9 @@ public static class MazePlayerUtils
                 mazeObj.bullets.RemoveAt(i);
                 int scoreToAdd = 50 + mazeObj.currentLevel * 2;
                 if (mazeObj.scoreBoosterActive) scoreToAdd = Mathf.RoundToInt(scoreToAdd * mazeObj.scoreBoosterMultiplier);
+                
+                // Aplicar modificadores de dano de eventos
+                scoreToAdd = Mathf.RoundToInt(scoreToAdd * MazeEventSystem.GetPlayerDamageModifier());
                 MazeHUD.AddScore(scoreToAdd);
                 mazeObj.score = MazeHUD.score;
                 
@@ -249,6 +256,17 @@ public static class MazePlayerUtils
                 // Só perde vida se não estiver com proteção ao spawnar
                 if (spawnProtectionTimer <= 0f)
                 {
+                    // Verificar se ataques de inimigos estão desabilitados por evento
+                    if (MazeEventSystem.AreEnemyAttacksDisabled())
+                    {
+                        // Inimigo é destruído sem causar dano
+                        MazeVisualEffects.CreateEnemyDeathEffect(mazeObj.enemies[i], cellSize);
+                        mazeObj.enemies.RemoveAt(i);
+                        MazeHUD.AddScore(10);
+                        if (AudioManager.Instance) AudioManager.Instance.PlaySFX(AudioManager.Instance.enemyDeathSound);
+                        return;
+                    }
+                    
                     if (mazeObj.shieldActive)
                     {
                         // Criar efeito de bloqueio de escudo

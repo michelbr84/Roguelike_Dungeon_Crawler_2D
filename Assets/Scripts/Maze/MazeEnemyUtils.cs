@@ -29,7 +29,12 @@ public static class MazeEnemyUtils
         enemyDataList.Clear();
         var rng = new System.Random();
         int tries = 0;
-        while (mazeObj.enemies.Count < mazeObj.enemyCount && tries < 500)
+        
+        // Aplicar modificadores de eventos
+        float enemySpawnModifier = MazeEventSystem.GetEnemySpawnModifier();
+        int adjustedEnemyCount = Mathf.RoundToInt(mazeObj.enemyCount * enemySpawnModifier);
+        
+        while (mazeObj.enemies.Count < adjustedEnemyCount && tries < 500)
         {
             int x = rng.Next(0, mazeObj.width);
             int y = rng.Next(0, mazeObj.height);
@@ -41,6 +46,9 @@ public static class MazeEnemyUtils
                 Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
                 Vector2Int randomDir = directions[rng.Next(directions.Length)];
                 enemyDataList.Add(new EnemyData(pos, randomDir));
+                
+                // Gerar recursos aleatórios quando inimigo é criado
+                MazeCraftingSystem.GenerateRandomResources(pos);
             }
             tries++;
         }
@@ -251,6 +259,37 @@ public static class MazeEnemyUtils
         if (direction == Vector2Int.down) return 270f;     // Olhando para baixo
         
         return 0f; // Padrão
+    }
+
+    /// <summary>
+    /// Causa dano a um inimigo em uma posição específica
+    /// </summary>
+    public static void DamageEnemyAtPosition(Vector2Int position, int damage, ProceduralMaze mazeObj)
+    {
+        int enemyIndex = mazeObj.enemies.FindIndex(e => e == position);
+        if (enemyIndex != -1)
+        {
+            // Por simplicidade, vamos considerar que qualquer dano mata o inimigo
+            // Em um sistema mais complexo, poderíamos ter HP dos inimigos
+            mazeObj.enemies.RemoveAt(enemyIndex);
+            
+            // Criar efeito visual
+            float cellSize = Mathf.Min(Screen.width / (float)mazeObj.width, Screen.height / (float)mazeObj.height);
+            MazeVisualEffects.CreateEnemyDeathEffect(position, cellSize);
+            
+            // Adicionar score
+            int scoreToAdd = 50 + mazeObj.currentLevel * 2;
+            if (mazeObj.scoreBoosterActive) scoreToAdd = Mathf.RoundToInt(scoreToAdd * mazeObj.scoreBoosterMultiplier);
+            MazeHUD.AddScore(scoreToAdd);
+            mazeObj.score = MazeHUD.score;
+            
+            // Registrar estatísticas
+            MazeAchievements.OnEnemyKilled();
+            MazeStatistics.OnEnemyKilled();
+            MazeMissions.OnEnemyKilled();
+            
+            if (AudioManager.Instance) AudioManager.Instance.PlaySFX(AudioManager.Instance.enemyDeathSound);
+        }
     }
 
     /// <summary>

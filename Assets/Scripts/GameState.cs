@@ -2,6 +2,12 @@
 public enum GameState
 {
     Menu,
+    Tutorial,
     Playing,
-    GameOver
+    Paused,
+    GameOver,
+    Victory,
+    Settings,
+    Statistics,
+    ClassSelection
 }

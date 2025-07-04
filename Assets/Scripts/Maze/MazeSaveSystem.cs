@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.IO;
 
 public static class MazeSaveSystem
 {
@@ -16,6 +17,8 @@ public static class MazeSaveSystem
     private const string KEY_ACHIEVEMENTS = "MazeAchievements";
     private const string KEY_SETTINGS = "MazeSettings";
     private const string KEY_LAST_SAVE_TIME = "MazeLastSaveTime";
+    private const string KEY_RANKING = "MazeRanking";
+    private const int RANKING_SIZE = 10;
     
     // Dados de save
     [Serializable]
@@ -358,6 +361,60 @@ public static class MazeSaveSystem
         PlayerPrefs.SetInt(KEY_LEVEL, maze.currentLevel);
         PlayerPrefs.SetInt(KEY_LIVES, maze.lives);
         PlayerPrefs.SetInt(KEY_AMMO, maze.ammo);
+        PlayerPrefs.Save();
+    }
+
+    // Exportar configurações para JSON
+    public static void ExportSettingsToJson(string path)
+    {
+        var settings = LoadSettings();
+        string json = JsonUtility.ToJson(settings, true);
+        File.WriteAllText(path, json);
+    }
+    // Importar configurações de JSON
+    public static void ImportSettingsFromJson(string path)
+    {
+        if (!File.Exists(path)) return;
+        string json = File.ReadAllText(path);
+        var settings = JsonUtility.FromJson<GameSettings>(json);
+        if (settings != null)
+            SaveSettings(settings);
+    }
+
+    // Adicionar score ao ranking local
+    public static void AddScoreToRanking(int score)
+    {
+        List<int> ranking = GetRanking();
+        ranking.Add(score);
+        ranking.Sort((a, b) => b.CompareTo(a)); // decrescente
+        if (ranking.Count > RANKING_SIZE)
+            ranking.RemoveAt(ranking.Count - 1);
+        string rankingStr = string.Join(",", ranking);
+        PlayerPrefs.SetString(KEY_RANKING, rankingStr);
+        PlayerPrefs.Save();
+    }
+
+    // Obter ranking local
+    public static List<int> GetRanking()
+    {
+        string rankingStr = PlayerPrefs.GetString(KEY_RANKING, "");
+        List<int> ranking = new List<int>();
+        if (!string.IsNullOrEmpty(rankingStr))
+        {
+            string[] parts = rankingStr.Split(',');
+            foreach (var p in parts)
+            {
+                if (int.TryParse(p, out int val))
+                    ranking.Add(val);
+            }
+        }
+        return ranking;
+    }
+
+    // Limpar ranking
+    public static void ClearRanking()
+    {
+        PlayerPrefs.DeleteKey(KEY_RANKING);
         PlayerPrefs.Save();
     }
 } 

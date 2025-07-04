@@ -15,6 +15,10 @@ public static class MazePowerUpUtils
         var rng = new System.Random();
         int baseSpawn = 1 + mazeObj.currentLevel / 3;
         int toSpawn = Mathf.RoundToInt(baseSpawn * MazeDifficultySystem.GetPowerUpSpawnRateMultiplier());
+        
+        // Aplicar modificadores de eventos
+        float powerUpModifier = MazeEventSystem.GetPowerUpModifier();
+        toSpawn = Mathf.RoundToInt(toSpawn * powerUpModifier);
         int spawned = 0, tries = 0;
         while (spawned < toSpawn && tries < 1000)
         {

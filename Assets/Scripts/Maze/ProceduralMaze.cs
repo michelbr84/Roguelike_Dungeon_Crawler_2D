@@ -159,9 +159,17 @@ public class ProceduralMaze : MonoBehaviour
         instance = this;
     }
 
-    void Start()
+    private void Start()
     {
-        MazeInitialization.InitializeGame(this);
+        // Inicializar sistemas
+        MazeDebugSystem.Initialize();
+        MazeStatistics.Initialize();
+        
+        // Carregar configurações
+        LoadSettings();
+        
+        // Inicializar jogo
+        InitializeGame();
     }
 
     void Update()
@@ -170,10 +178,19 @@ public class ProceduralMaze : MonoBehaviour
         {
             MazeInputHandler.HandleGameInput(this);
             MazeGameplayLoop.UpdateGameplay(this);
+            
+            // Atualizar novos sistemas
+            MazeWeatherSystem.Update(Time.deltaTime);
+            MazeEventSystem.Update(Time.deltaTime);
+            MazePetSystem.UpdatePets(this, Time.deltaTime);
         }
         else if (gameState == GameState.Menu)
         {
             MazeInputHandler.HandleMenuInput();
+        }
+        else if (gameState == GameState.Tutorial)
+        {
+            MazeTutorial.HandleTutorialInput();
         }
         else if (gameState == GameState.GameOver)
         {
@@ -181,20 +198,87 @@ public class ProceduralMaze : MonoBehaviour
         }
     }
 
-    void OnGUI()
+    private void OnGUI()
     {
-        if (gameState == GameState.Menu)
+        // Renderizar informações de debug
+        MazeDebugSystem.RenderDebugInfo(this);
+        
+        // Controles de debug
+        if (MazeDebugSystem.IsDebugMode())
         {
-            MazeMenu.DrawMenu(scoreRecord, lives);
+            HandleDebugInput();
         }
-        else if (gameState == GameState.GameOver)
+        
+        // Renderizar menus baseados no estado
+        switch (gameState)
         {
-            MazeMenu.DrawGameOver(score, scoreRecord, lives);
+            case GameState.Menu:
+                MazeMenu.RenderMenu(this);
+                break;
+            case GameState.Playing:
+                MazeRendering.DrawMaze(this);
+                MazeHUD.RenderHUD(this);
+                break;
+            case GameState.Paused:
+                MazeMenu.RenderPauseMenu(this);
+                break;
+            case GameState.GameOver:
+                MazeMenu.RenderGameOverMenu(this);
+                break;
+            case GameState.Victory:
+                MazeMenu.RenderVictoryMenu(this);
+                break;
+            case GameState.Settings:
+                MazeSettingsMenu.RenderSettingsMenu(this);
+                break;
+            case GameState.Statistics:
+                MazeStatisticsMenu.RenderStatisticsMenu(this);
+                break;
+            case GameState.Tutorial:
+                MazeTutorial.RenderTutorial(this);
+                break;
+            case GameState.ClassSelection:
+                MazeClassSelectionMenu.RenderMenu();
+                break;
         }
-        else // GameState.Playing
+    }
+    
+    private void HandleDebugInput()
+    {
+        // Teclas de debug
+        if (Input.GetKeyDown(KeyCode.F1))
         {
-            MazeRendering.DrawMaze(this);
-            MazeHUD.DrawHUD(this);
+            MazeDebugSystem.ToggleDebugInfo();
+        }
+        
+        if (Input.GetKeyDown(KeyCode.F2))
+        {
+            // Pular para próximo nível
+            NextLevel();
+        }
+        
+        if (Input.GetKeyDown(KeyCode.F3))
+        {
+            // Adicionar vida
+            lives++;
+        }
+        
+        if (Input.GetKeyDown(KeyCode.F4))
+        {
+            // Adicionar munição
+            ammo += 10;
+        }
+        
+        if (Input.GetKeyDown(KeyCode.F5))
+        {
+            // Adicionar score
+            score += 1000;
+        }
+        
+        if (Input.GetKeyDown(KeyCode.F6))
+        {
+            // Validar sistema
+            MazeDebugSystem.ValidateSystem();
         }
     }
 
@@ -205,5 +289,69 @@ public class ProceduralMaze : MonoBehaviour
     public void LoseLifeAndRespawn() => MazeGameLoop.LoseLifeAndRespawn(this);
     public void GameOver() => MazeGameLoop.GameOver(this);
     public void CollectPowerUp(PowerUpType type) => MazeGameLoop.CollectPowerUp(this, type);
+    
+    // Carregar configurações
+    private void LoadSettings()
+    {
+        var settings = MazeSaveSystem.LoadSettings();
+        if (settings != null)
+        {
+            // Aplicar configurações carregadas
+            if (AudioManager.Instance)
+            {
+                AudioManager.Instance.SetMusicVolume(settings.musicVolume);
+                AudioManager.Instance.SetSFXVolume(settings.sfxVolume);
+            }
+            
+            // Aplicar dificuldade
+            MazeDifficultySystem.SetDifficulty((MazeDifficultySystem.DifficultyLevel)settings.difficultyLevel);
+        }
+    }
+    
+    // Inicializar jogo
+    private void InitializeGame()
+    {
+        // Inicializar sistemas
+        MazeInitialization.InitializeGame(this);
+        
+        // Inicializar sistemas de classe e equipamentos
+        MazeCharacterSystem.Initialize();
+        MazeEquipmentSystem.Initialize();
+        
+        // Aplicar estatísticas de classe
+        MazeCharacterSystem.ApplyClassStats(this);
+        MazeCharacterSystem.ApplySpecialAbility(this);
+        
+        // Aplicar equipamentos
+        MazeEquipmentSystem.ApplyEquipmentStats(this);
+        MazeEquipmentSystem.ApplySpecialEffects(this);
+        
+        // Carregar recorde
+        scoreRecord = PlayerPrefs.GetInt("ScoreRecord", 0);
+        
+        // Verificar se deve mostrar tutorial
+        if (MazeTutorial.ShouldShowTutorial())
+        {
+            gameState = GameState.Tutorial;
+        }
+        else
+        {
+            gameState = GameState.Menu;
+        }
+    }
+    
+    // Métodos de compatibilidade
+    public static void RestartGame()
+    {
+        if (instance != null)
+        {
+            instance.LoseLifeAndRespawn();
+        }
+    }
+    
+    public static void ReturnToMenu()
+    {
+        gameState = GameState.Menu;
+    }
 }
  

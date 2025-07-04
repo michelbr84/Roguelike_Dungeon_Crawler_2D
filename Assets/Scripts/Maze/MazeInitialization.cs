@@ -14,6 +14,10 @@ public static class MazeInitialization
             maze.scoreRecord = MazeSaveSystem.LoadRecord();
         }
         
+        // Carregar estado dos novos sistemas
+        MazeWeatherSystem.LoadWeatherState();
+        MazeEventSystem.LoadEventState();
+        
         // Inicializar sistema de achievements
         MazeAchievements.Initialize();
         
@@ -34,6 +38,21 @@ public static class MazeInitialization
         // Inicializar sistema de estatísticas
         MazeStatistics.Initialize();
         MazeStatistics.OnGameStarted();
+        
+        // Inicializar tutorial
+        MazeTutorial.Initialize();
+        
+        // Inicializar novos sistemas
+        MazeCraftingSystem.Initialize();
+        MazePetSystem.Initialize();
+        MazeWeatherSystem.Initialize();
+        MazeEventSystem.Initialize();
+        
+        // Verificar se deve mostrar tutorial automaticamente
+        if (MazeTutorial.ShouldShowTutorial())
+        {
+            MazeTutorial.StartTutorial();
+        }
         
         // Resetar HUD
         MazeHUD.ResetAll();
