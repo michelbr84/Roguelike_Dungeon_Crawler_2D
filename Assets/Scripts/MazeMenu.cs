@@ -368,6 +368,7 @@ public static class MazeMenu
         if (GUILayout.Button("Configurações", buttonStyle, GUILayout.Height(36)))
         {
             ProceduralMaze.gameState = GameState.Settings;
+            MazeSettingsMenu.ToggleMenu();
         }
         
         GUILayout.Space(12);

@@ -32,20 +32,20 @@ public static class MazeInputHandler
             }
         }
 
-        // Menu de configurações ou sair do jogo
+        // Menu de configurações ou pausar o jogo
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (MazeSettingsMenu.IsVisible())
             {
                 MazeSettingsMenu.ToggleMenu();
             }
-            else
+            else if (ProceduralMaze.gameState == GameState.Playing)
             {
-#if UNITY_EDITOR
-                UnityEditor.EditorApplication.isPlaying = false;
-#else
-                Application.Quit();
-#endif
+                ProceduralMaze.gameState = GameState.Paused;
+            }
+            else if (ProceduralMaze.gameState == GameState.Paused)
+            {
+                ProceduralMaze.gameState = GameState.Playing;
             }
         }
     }

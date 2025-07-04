@@ -1,8 +1,12 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+#endif
 using System.IO;
 
+#if UNITY_EDITOR
 public static class MazeBuildSystem
 {
     // Configurações de build
@@ -196,4 +200,5 @@ public static class MazeBuildSystem
         PlayerSettings.runInBackground = true;
         Debug.Log("Qualidade configurada para Low");
     }
-} 
+}
+#endif 

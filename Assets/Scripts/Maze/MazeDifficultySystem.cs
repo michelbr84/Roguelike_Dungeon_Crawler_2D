@@ -43,17 +43,17 @@ public static class MazeDifficultySystem
             {
                 case DifficultyLevel.Easy:
                     name = "Fácil";
-                    description = "Ideal para iniciantes";
+                    description = "Para iniciantes";
                     enemySpeedMultiplier = 0.7f;
-                    enemySpawnRateMultiplier = 0.6f;
+                    enemySpawnRateMultiplier = 0.7f;
                     powerUpSpawnRateMultiplier = 1.5f;
                     startingLives = 5;
                     startingAmmo = 15;
                     playerSpeedMultiplier = 1.2f;
-                    bulletSpeedMultiplier = 1.1f;
-                    advancedEnemiesEnabled = false;
-                    bossEnabled = false;
-                    scoreMultiplier = 0.8f;
+                    bulletSpeedMultiplier = 1.2f;
+                    advancedEnemiesEnabled = true; // Corrigido: permitir inimigos avançados na dificuldade fácil
+                    bossEnabled = true;
+                    scoreMultiplier = 0.7f;
                     difficultyColor = Color.green;
                     break;
                     

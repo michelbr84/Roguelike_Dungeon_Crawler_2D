@@ -166,22 +166,49 @@ public static class MazeRendering
         foreach (var enemy in advancedEnemies)
         {
             Rect cellRect = new Rect(enemy.position.x * cellSize, enemy.position.y * cellSize, cellSize, cellSize);
-            
             Color enemyColor = GetAdvancedEnemyColor(enemy.type);
-            string enemySymbol = GetAdvancedEnemySymbol(enemy.type);
-            
-            // Desenhar inimigo avançado
+            Texture2D enemyTexture = null;
+            switch (enemy.type)
+            {
+                case MazeAdvancedEnemies.AdvancedEnemyType.Boss:
+                    enemyTexture = mazeObj.bossTexture;
+                    break;
+                case MazeAdvancedEnemies.AdvancedEnemyType.Sniper:
+                    enemyTexture = mazeObj.sniperTexture;
+                    break;
+                case MazeAdvancedEnemies.AdvancedEnemyType.Kamikaze:
+                    enemyTexture = mazeObj.kamikazeTexture;
+                    break;
+                case MazeAdvancedEnemies.AdvancedEnemyType.Spawner:
+                    enemyTexture = mazeObj.spawnerTexture;
+                    break;
+            }
             Color oldColor = GUI.color;
             GUI.color = enemyColor;
-            GUI.DrawTexture(cellRect, Texture2D.whiteTexture);
-            
-            // Desenhar símbolo do inimigo
-            GUIStyle style = new GUIStyle();
-            style.fontSize = Mathf.RoundToInt(cellSize * 0.6f);
-            style.alignment = TextAnchor.MiddleCenter;
-            style.normal.textColor = Color.white;
-            GUI.Label(cellRect, enemySymbol, style);
-            
+            float angle = 0f;
+            if (enemy.direction == Vector2Int.up) angle = 180f; // Corrigido: subir = 180° (olha para cima)
+            else if (enemy.direction == Vector2Int.right) angle = 90f;
+            else if (enemy.direction == Vector2Int.down) angle = 0f; // Corrigido: descer = 0° (olha para baixo)
+            else if (enemy.direction == Vector2Int.left) angle = 270f;
+            Matrix4x4 matrixBackup = GUI.matrix;
+            Vector2 pivot = new Vector2(cellRect.x + cellRect.width / 2, cellRect.y + cellRect.height / 2);
+            GUIUtility.RotateAroundPivot(angle, pivot);
+            if (enemyTexture)
+            {
+                GUI.DrawTexture(cellRect, enemyTexture, ScaleMode.ScaleToFit);
+            }
+            else
+            {
+                GUI.DrawTexture(cellRect, Texture2D.whiteTexture);
+                // Desenhar símbolo do inimigo
+                GUIStyle style = new GUIStyle();
+                style.fontSize = Mathf.RoundToInt(cellSize * 0.6f);
+                style.alignment = TextAnchor.MiddleCenter;
+                style.normal.textColor = Color.white;
+                string enemySymbol = GetAdvancedEnemySymbol(enemy.type);
+                GUI.Label(cellRect, enemySymbol, style);
+            }
+            GUI.matrix = matrixBackup;
             // Barra de vida para inimigos com mais de 1 HP
             if (enemy.maxHealth > 1)
             {
@@ -189,17 +216,14 @@ public static class MazeRendering
                 float healthBarHeight = 4f;
                 float healthBarX = cellRect.x + (cellSize - healthBarWidth) / 2;
                 float healthBarY = cellRect.y + cellSize - 8f;
-                
                 // Fundo da barra
                 GUI.color = Color.red;
                 GUI.DrawTexture(new Rect(healthBarX, healthBarY, healthBarWidth, healthBarHeight), Texture2D.whiteTexture);
-                
                 // Vida atual
                 GUI.color = Color.green;
                 float healthPercent = enemy.health / enemy.maxHealth;
                 GUI.DrawTexture(new Rect(healthBarX, healthBarY, healthBarWidth * healthPercent, healthBarHeight), Texture2D.whiteTexture);
             }
-            
             GUI.color = oldColor;
         }
 

@@ -228,6 +228,32 @@ public static class MazePlayerUtils
                 mazeObj.bullets.RemoveAt(i);
                 continue;
             }
+            // NOVO: Verificar colisão com o jogador (projéteis de inimigos)
+            if (next == mazeObj.playerPos)
+            {
+                float cellSizeHit = Mathf.Min(Screen.width / (float)mazeObj.width, Screen.height / (float)mazeObj.height);
+                if (MazePlayerUtils.IsSpawnProtected())
+                {
+                    // Bloqueia durante proteção
+                    mazeObj.bullets.RemoveAt(i);
+                    continue;
+                }
+                if (mazeObj.shieldActive)
+                {
+                    MazeVisualEffects.CreateShieldBlockEffect(mazeObj.playerPos, cellSizeHit);
+                    if (AudioManager.Instance) AudioManager.Instance.PlaySFX(AudioManager.Instance.powerUpSound);
+                    mazeObj.bullets.RemoveAt(i);
+                    continue;
+                }
+                // Dano ao jogador
+                MazeVisualEffects.CreatePlayerHitEffect(mazeObj.playerPos, cellSizeHit);
+                MazeShaderEffects.ApplyScreenShake(10f, 0.3f);
+                MazeStatistics.OnPlayerDeath();
+                mazeObj.LoseLifeAndRespawn();
+                if (AudioManager.Instance) AudioManager.Instance.PlaySFX(AudioManager.Instance.playerDeathSound);
+                mazeObj.bullets.RemoveAt(i);
+                continue;
+            }
             b.pos = next;
         }
     }

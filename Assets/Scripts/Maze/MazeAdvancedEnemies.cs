@@ -23,7 +23,8 @@ public static class MazeAdvancedEnemies
         public float specialTimer;
         public int spawnCount; // Para spawners
         public Vector2Int lastPlayerPos; // Para sniper
-        
+        public Vector2Int direction; // NOVO: direção do movimento
+
         public AdvancedEnemyData(Vector2Int pos, AdvancedEnemyType t)
         {
             position = pos;
@@ -33,6 +34,7 @@ public static class MazeAdvancedEnemies
             specialTimer = 0f;
             spawnCount = 0;
             lastPlayerPos = Vector2Int.zero;
+            direction = Vector2Int.down; // Inicial padrão
         }
         
         private float GetMaxHealth(AdvancedEnemyType type)
@@ -80,6 +82,7 @@ public static class MazeAdvancedEnemies
             {
                 advancedEnemies.Add(new AdvancedEnemyData(bossPos, AdvancedEnemyType.Boss));
                 MazeShaderEffects.CreateBossGlow(bossPos);
+                Debug.Log($"[SPAWN] Boss spawnado no nível {level} na posição {bossPos}");
             }
         }
         
@@ -90,6 +93,7 @@ public static class MazeAdvancedEnemies
             if (sniperPos != Vector2Int.zero)
             {
                 advancedEnemies.Add(new AdvancedEnemyData(sniperPos, AdvancedEnemyType.Sniper));
+                Debug.Log($"[SPAWN] Sniper spawnado no nível {level} na posição {sniperPos}");
             }
         }
         
@@ -100,6 +104,7 @@ public static class MazeAdvancedEnemies
             if (kamikazePos != Vector2Int.zero)
             {
                 advancedEnemies.Add(new AdvancedEnemyData(kamikazePos, AdvancedEnemyType.Kamikaze));
+                Debug.Log($"[SPAWN] Kamikaze spawnado no nível {level} na posição {kamikazePos}");
             }
         }
         
@@ -110,6 +115,7 @@ public static class MazeAdvancedEnemies
             if (spawnerPos != Vector2Int.zero)
             {
                 advancedEnemies.Add(new AdvancedEnemyData(spawnerPos, AdvancedEnemyType.Spawner));
+                Debug.Log($"[SPAWN] Spawner spawnado no nível {level} na posição {spawnerPos}");
             }
         }
     }
@@ -129,6 +135,21 @@ public static class MazeAdvancedEnemies
                 return pos;
             }
         }
+        // Se não encontrou, forçar spawn em qualquer célula livre
+        for (int x = 0; x < maze.width; x++)
+        {
+            for (int y = 0; y < maze.height; y++)
+            {
+                Vector2Int pos = new Vector2Int(x, y);
+                if (maze.maze[x, y] == 0 && pos != maze.playerPos && pos != maze.exitPos &&
+                    !maze.enemies.Contains(pos) && !IsAdvancedEnemyAt(pos))
+                {
+                    Debug.LogWarning($"[SPAWN-FORCE] Inimigo avançado forçado na posição {pos} por falta de espaço.");
+                    return pos;
+                }
+            }
+        }
+        Debug.LogError("[SPAWN-FAIL] Nenhuma posição livre para spawnar inimigo avançado!");
         return Vector2Int.zero;
     }
     
@@ -184,6 +205,7 @@ public static class MazeAdvancedEnemies
             
             if (IsValidMove(newPos, maze))
             {
+                boss.direction = direction;
                 boss.position = newPos;
             }
             else
@@ -195,6 +217,7 @@ public static class MazeAdvancedEnemies
                     Vector2Int altPos = boss.position + alt;
                     if (IsValidMove(altPos, maze))
                     {
+                        boss.direction = alt;
                         boss.position = altPos;
                         break;
                     }
@@ -206,20 +229,24 @@ public static class MazeAdvancedEnemies
     // Comportamento do Sniper
     private static void UpdateSniper(AdvancedEnemyData sniper, ProceduralMaze maze)
     {
+        Vector2Int toPlayer = GetDirectionToPlayer(sniper.position, maze.playerPos);
+        if (toPlayer != Vector2Int.zero)
+            sniper.direction = toPlayer;
         if (sniper.specialTimer >= sniperShootInterval)
         {
             sniper.specialTimer = 0f;
-            
-            // Sniper atira em linha reta se o jogador estiver alinhado
+            // Sniper atira para frente (na direção visual) e só se o jogador estiver alinhado e na mesma direção
             if (IsPlayerAligned(sniper.position, maze.playerPos))
             {
-                // Criar projétil do sniper
-                Vector2Int bulletDir = GetDirectionToPlayer(sniper.position, maze.playerPos);
-                maze.bullets.Add(new ProceduralMaze.Bullet(sniper.position, bulletDir));
-                
-                if (AudioManager.Instance) AudioManager.Instance.PlaySFX(AudioManager.Instance.shootSound);
+                Vector2Int diff = maze.playerPos - sniper.position;
+                // Só atira se o jogador estiver na direção visual
+                if ((sniper.direction.x != 0 && Mathf.Sign(diff.x) == Mathf.Sign(sniper.direction.x)) ||
+                    (sniper.direction.y != 0 && Mathf.Sign(diff.y) == Mathf.Sign(sniper.direction.y)))
+                {
+                    maze.bullets.Add(new ProceduralMaze.Bullet(sniper.position, sniper.direction));
+                    if (AudioManager.Instance) AudioManager.Instance.PlaySFX(AudioManager.Instance.shootSound);
+                }
             }
-            
             sniper.lastPlayerPos = maze.playerPos;
         }
     }
@@ -230,11 +257,11 @@ public static class MazeAdvancedEnemies
         if (kamikaze.specialTimer >= kamikazeSpeed)
         {
             kamikaze.specialTimer = 0f;
-            
-            // Kamikaze corre direto para o jogador
             Vector2Int direction = GetDirectionToPlayer(kamikaze.position, maze.playerPos);
-            Vector2Int newPos = kamikaze.position + direction;
-            
+            // Corrigir: se direção for oposta à anterior, inverta para sempre "de frente"
+            if (direction != Vector2Int.zero)
+                kamikaze.direction = direction;
+            Vector2Int newPos = kamikaze.position + kamikaze.direction;
             if (IsValidMove(newPos, maze))
             {
                 kamikaze.position = newPos;
@@ -248,15 +275,14 @@ public static class MazeAdvancedEnemies
         if (spawner.specialTimer >= spawnerSpawnInterval && spawner.spawnCount < 3)
         {
             spawner.specialTimer = 0f;
-            
-            // Spawner cria inimigos normais
             Vector2Int spawnPos = FindSpawnPosition(spawner.position, maze);
             if (spawnPos != Vector2Int.zero)
             {
+                Vector2Int moveDir = spawnPos - spawner.position;
+                if (moveDir != Vector2Int.zero)
+                    spawner.direction = moveDir;
                 maze.enemies.Add(spawnPos);
                 spawner.spawnCount++;
-                
-                // Criar efeito visual de spawn
                 float cellSize = Mathf.Min(Screen.width / (float)maze.width, Screen.height / (float)maze.height);
                 MazeVisualEffects.CreateEnemyDeathEffect(spawnPos, cellSize);
             }

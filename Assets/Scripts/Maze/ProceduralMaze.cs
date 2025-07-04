@@ -3,33 +3,101 @@ using System.Collections.Generic;
 
 public class ProceduralMaze : MonoBehaviour
 {
+    [Header("Debug & Configuração Rápida")]
+    [Tooltip("Iniciar o jogo com todos os power-ups ativos para testes.")]
+    public bool startWithAllPowerUps = false;
+    [Tooltip("Ativar modo debug (mostra informações extras na tela).")]
+    public bool debugMode = false;
+    [Tooltip("Pular tutorial ao iniciar.")]
+    public bool skipTutorial = false;
+    [Space]
+
+    [Header("Sistema de Clima (Weather)")]
+    [Tooltip("Ativar sistema de clima dinâmico.")]
+    public bool enableWeatherSystem = true;
+    [Tooltip("Tipos de clima disponíveis no jogo.")]
+    public List<string> weatherTypes = new List<string> { "Clear", "Rain", "Fog", "Storm", "Snow", "Sandstorm", "Darkness", "Wind" };
+    [Tooltip("Duração mínima de cada clima (segundos).")]
+    [Min(1)] public float minWeatherDuration = 30f;
+    [Tooltip("Duração máxima de cada clima (segundos).")]
+    [Min(1)] public float maxWeatherDuration = 90f;
+    [Space]
+
+    [Header("Sistema de Pets/Companions")]
+    [Tooltip("Ativar sistema de pets/companions.")]
+    public bool enablePetSystem = true;
+    [Tooltip("Lista de pets disponíveis para o jogador.")]
+    public List<string> availablePets = new List<string> { "Wolf", "Fairy", "Golem", "Dragon", "Robot" };
+    [Tooltip("Pet inicial do jogador (deixe vazio para nenhum).")]
+    public string startingPet = "";
+    [Space]
+
+    [Header("Sistema de Crafting")]
+    [Tooltip("Ativar sistema de crafting de equipamentos.")]
+    public bool enableCraftingSystem = true;
+    [Tooltip("Recursos iniciais do jogador para crafting.")]
+    public int startingIron = 0;
+    public int startingGold = 0;
+    public int startingCrystal = 0;
+    public int startingEssence = 0;
+    public int startingFragment = 0;
+    [Space]
+
+    [Header("Sistema de Eventos Aleatórios")]
+    [Tooltip("Ativar sistema de eventos aleatórios.")]
+    public bool enableEventSystem = true;
+    [Tooltip("Chance de evento ocorrer por minuto (0 a 1).")]
+    [Range(0f,1f)] public float eventChancePerMinute = 0.2f;
+    [Tooltip("Lista de tipos de eventos possíveis.")]
+    public List<string> eventTypes = new List<string> { "Treasure", "Ambush", "Merchant", "Trap", "Blessing", "Curse", "Puzzle", "Boss", "Rescue", "SecretRoom" };
+    [Space]
+
+    // Melhorias em campos existentes
     [Header("Maze Settings")]
-    public int width = 10;
-    public int height = 10;
-    [Range(0f, 1f)]
-    public float wallProbability = 0.2f;
+    [Tooltip("Largura do labirinto (número de células).")]
+    [Min(5)] public int width = 10;
+    [Tooltip("Altura do labirinto (número de células).")]
+    [Min(5)] public int height = 10;
+    [Tooltip("Probabilidade de uma célula ser parede (0 = sem paredes, 1 = só paredes).")]
+    [Range(0f, 1f)] public float wallProbability = 0.2f;
+    [Space]
 
     [Header("Movement Keys")]
+    [Tooltip("Tecla para mover para cima.")]
     public KeyCode upKey = KeyCode.UpArrow;
+    [Tooltip("Tecla para mover para baixo.")]
     public KeyCode downKey = KeyCode.DownArrow;
+    [Tooltip("Tecla para mover para a esquerda.")]
     public KeyCode leftKey = KeyCode.LeftArrow;
+    [Tooltip("Tecla para mover para a direita.")]
     public KeyCode rightKey = KeyCode.RightArrow;
+    [Tooltip("Tecla para atirar.")]
     public KeyCode shootKey = KeyCode.Space;
+    [Tooltip("Tecla para teleporte.")]
     public KeyCode teleportKey = KeyCode.T;
+    [Space]
 
     [Header("Axis Multipliers (1 = frente, -1 = trás)")]
     [Tooltip("Horizontal: 1 = Para onde o jogador OLHA, -1 = Oposto ao que o jogador olha")]
     public int horizontalMultiplier = -1;
     [Tooltip("Vertical: 1 = Para onde o jogador OLHA, -1 = Oposto ao que o jogador olha")]
     public int verticalMultiplier = 1;
+    [Space]
 
     [Header("Visual Settings")]
+    [Tooltip("Cor de fundo do labirinto.")]
     public Color backgroundColor = new Color(0.12f, 0.12f, 0.12f, 1f);
+    [Tooltip("Cor das paredes.")]
     public Color wallColor = Color.gray;
+    [Tooltip("Cor do jogador.")]
     public Color playerColor = Color.green;
+    [Tooltip("Cor da saída.")]
     public Color exitColor = Color.red;
+    [Tooltip("Cor dos inimigos.")]
     public Color enemyColor = Color.magenta;
+    [Tooltip("Cor dos projéteis.")]
     public Color bulletColor = Color.yellow;
+    [Space]
 
     // Texturas do Maze (Cell/Objects)
     public Texture2D backgroundTexture;
@@ -154,6 +222,16 @@ public class ProceduralMaze : MonoBehaviour
     public float playerSpeedMultiplier = 1.0f;
     public float bulletSpeedMultiplier = 1.0f;
 
+    [Header("Texturas de Inimigos Avançados")]
+    [Tooltip("Textura do Boss.")]
+    public Texture2D bossTexture;
+    [Tooltip("Textura do Sniper.")]
+    public Texture2D sniperTexture;
+    [Tooltip("Textura do Kamikaze.")]
+    public Texture2D kamikazeTexture;
+    [Tooltip("Textura do Spawner.")]
+    public Texture2D spawnerTexture;
+
     void Awake()
     {
         instance = this;
@@ -195,6 +273,11 @@ public class ProceduralMaze : MonoBehaviour
         else if (gameState == GameState.GameOver)
         {
             MazeInputHandler.HandleGameOverInput();
+        }
+        // Garante que ao sair das configurações, retorna para o menu de pausa
+        else if (gameState == GameState.Settings && !MazeSettingsMenu.IsVisible())
+        {
+            gameState = GameState.Paused;
         }
     }
 

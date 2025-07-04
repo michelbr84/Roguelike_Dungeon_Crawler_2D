@@ -727,13 +727,14 @@ MonoBehaviour:
   powerUpSound: {fileID: 8300000, guid: bb64042939e9bfb43a3c057a958cf8e4, type: 3}
   victorySound: {fileID: 8300000, guid: fbfc77ee0d0ff36449c79ce6ee305bc6, type: 3}
   failSound: {fileID: 8300000, guid: 30800a966ce5acc48b5034ec1fa3b1d3, type: 3}
-  doubleShotSound: {fileID: 0}
-  tripleShotSound: {fileID: 0}
-  speedBoostSound: {fileID: 0}
-  invisibilitySound: {fileID: 0}
-  teleportSound: {fileID: 0}
-  scoreBoosterSound: {fileID: 0}
+  doubleShotSound: {fileID: 8300000, guid: 70c753a629a4a804ca1138452ee94948, type: 3}
+  tripleShotSound: {fileID: 8300000, guid: 7b9bd4462766e434fa4fc20a7771841e, type: 3}
+  speedBoostSound: {fileID: 8300000, guid: ff6248cb02a10ed49aac8a3eb85840e9, type: 3}
+  invisibilitySound: {fileID: 8300000, guid: c8dbc40cf2d356946b2bbf6af538a86f, type: 3}
+  teleportSound: {fileID: 8300000, guid: ade2974f68760234db87016b98e4118e, type: 3}
+  scoreBoosterSound: {fileID: 8300000, guid: a8f8bbcf2d5e4ea43b7e5c6a16bcc406, type: 3}
   backgroundMusic: {fileID: 8300000, guid: 570f59184f5d3d04392aeac0ac08bded, type: 3}
+  additionalMusic: []
   sfxSource: {fileID: 263637514}
   musicSource: {fileID: 529389536}
 --- !u!4 &734505614
@@ -797,6 +798,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e586f763750e9f444aa4e4f41467932b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProceduralMaze
+  startWithAllPowerUps: 0
+  debugMode: 0
+  skipTutorial: 0
+  enableWeatherSystem: 1
+  weatherTypes:
+  - Clear
+  - Rain
+  - Fog
+  - Storm
+  - Snow
+  - Sandstorm
+  - Darkness
+  - Wind
+  minWeatherDuration: 30
+  maxWeatherDuration: 90
+  enablePetSystem: 1
+  availablePets:
+  - Wolf
+  - Fairy
+  - Golem
+  - Dragon
+  - Robot
+  startingPet: Wolf
+  enableCraftingSystem: 1
+  startingIron: 0
+  startingGold: 0
+  startingCrystal: 0
+  startingEssence: 0
+  startingFragment: 0
+  enableEventSystem: 1
+  eventChancePerMinute: 0.2
+  eventTypes:
+  - Treasure
+  - Ambush
+  - Merchant
+  - Trap
+  - Blessing
+  - Curse
+  - Puzzle
+  - Boss
+  - Rescue
+  - SecretRoom
   width: 1440
   height: 1440
   wallProbability: 0.2
@@ -870,6 +913,14 @@ MonoBehaviour:
   scoreBoosterMultiplier: 2
   powerUpFlashTimer: 0
   powerUpFlashDuration: 0.3
+  enemySpeedMultiplier: 1
+  powerUpSpawnRate: 1
+  playerSpeedMultiplier: 1
+  bulletSpeedMultiplier: 1
+  bossTexture: {fileID: 2800000, guid: ab588ff84cbb0d943978a528f8f36186, type: 3}
+  sniperTexture: {fileID: 2800000, guid: 6e6f9237558f913469439b3404aefd58, type: 3}
+  kamikazeTexture: {fileID: 2800000, guid: 10374ee3f2648914ebf5bfef8fd1c80a, type: 3}
+  spawnerTexture: {fileID: 2800000, guid: 0df04b9296bf5914ea8745a7cd254535, type: 3}
 --- !u!61 &246058445433391593
 BoxCollider2D:
   m_ObjectHideFlags: 0
