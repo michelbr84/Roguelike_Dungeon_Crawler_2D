@@ -144,7 +144,21 @@ public class ProceduralMaze : MonoBehaviour
     {
         public Vector2Int pos;
         public Vector2Int dir;
-        public Bullet(Vector2Int pos, Vector2Int dir) { this.pos = pos; this.dir = dir; }
+        public bool isSniperBullet; // NOVO: marca se o projétil veio do sniper
+        
+        public Bullet(Vector2Int pos, Vector2Int dir) 
+        { 
+            this.pos = pos; 
+            this.dir = dir; 
+            this.isSniperBullet = false; // Padrão é false
+        }
+        
+        public Bullet(Vector2Int pos, Vector2Int dir, bool isSniper) 
+        { 
+            this.pos = pos; 
+            this.dir = dir; 
+            this.isSniperBullet = isSniper; 
+        }
     }
     public List<Bullet> bullets = new List<Bullet>();
 
@@ -159,6 +173,12 @@ public class ProceduralMaze : MonoBehaviour
     // VIDAS
     [HideInInspector] public int lives = 3;
     public int startingLives = 3;
+    
+    // SISTEMA DE DANO FRACIONÁRIO
+    [Header("Sistema de Dano Fracionário")]
+    [HideInInspector] public float fractionalHealth = 2f; // 2.0 = 2 vidas completas
+    public float maxFractionalHealth = 2f; // Máximo de vida fracionária
+    public float sniperDamage = 0.5f; // Dano do sniper (meio coração)
 
     // MUNIÇÃO
     [HideInInspector] public int ammo = 10;
@@ -370,6 +390,7 @@ public class ProceduralMaze : MonoBehaviour
     public static void RestartGameFromGameOver() => MazeGameLoop.RestartGameFromGameOver();
     public void NextLevel() => MazeGameLoop.NextLevel(this);
     public void LoseLifeAndRespawn() => MazeGameLoop.LoseLifeAndRespawn(this);
+    public void ApplyFractionalDamage(float damage) => MazeGameLoop.ApplyFractionalDamage(this, damage);
     public void GameOver() => MazeGameLoop.GameOver(this);
     public void CollectPowerUp(PowerUpType type) => MazeGameLoop.CollectPowerUp(this, type);
     

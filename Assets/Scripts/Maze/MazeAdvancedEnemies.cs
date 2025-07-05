@@ -243,7 +243,7 @@ public static class MazeAdvancedEnemies
                 if ((sniper.direction.x != 0 && Mathf.Sign(diff.x) == Mathf.Sign(sniper.direction.x)) ||
                     (sniper.direction.y != 0 && Mathf.Sign(diff.y) == Mathf.Sign(sniper.direction.y)))
                 {
-                    maze.bullets.Add(new ProceduralMaze.Bullet(sniper.position, sniper.direction));
+                    maze.bullets.Add(new ProceduralMaze.Bullet(sniper.position, sniper.direction, true)); // true = sniper bullet
                     if (AudioManager.Instance) AudioManager.Instance.PlaySFX(AudioManager.Instance.shootSound);
                 }
             }

@@ -54,7 +54,7 @@ public static class MazeDebugSystem
         y += lineHeight;
         GUI.Label(new Rect(10, y, 300, lineHeight), $"Score: {maze.score}", debugStyle);
         y += lineHeight;
-        GUI.Label(new Rect(10, y, 300, lineHeight), $"Vidas: {maze.lives}", debugStyle);
+        GUI.Label(new Rect(10, y, 300, lineHeight), $"Vidas: {maze.lives} + {maze.fractionalHealth:F1}", debugStyle);
         y += lineHeight;
         GUI.Label(new Rect(10, y, 300, lineHeight), $"Munição: {maze.ammo}", debugStyle);
         y += lineHeight;

@@ -9,6 +9,7 @@ public static class MazeGameLoop
         instance.score = 0;
         instance.currentLevel = 1;
         instance.lives = instance.startingLives;
+        instance.fractionalHealth = instance.maxFractionalHealth; // Inicializar vida fracionária
         instance.ammo = instance.startingAmmo;
         instance.shieldActive = false;
         instance.shieldTimer = 0f;
@@ -55,6 +56,7 @@ public static class MazeGameLoop
         MazeHUD.NextLevel();
 
         maze.ammo = Mathf.Min(maze.ammo + 3, maze.maxAmmo); // bônus de munição por fase
+        maze.fractionalHealth = maze.maxFractionalHealth; // Restaurar vida fracionária no próximo nível
         int scoreToAdd = 100 * maze.currentLevel;
         if (maze.scoreBoosterActive) scoreToAdd = Mathf.RoundToInt(scoreToAdd * maze.scoreBoosterMultiplier);
         MazeHUD.AddScore(scoreToAdd);
@@ -102,6 +104,54 @@ public static class MazeGameLoop
             GameOver(maze);
         }
     }
+    
+    // NOVO: Método para aplicar dano fracionário (para sniper)
+    public static void ApplyFractionalDamage(ProceduralMaze maze, float damage)
+    {
+        if (maze.shieldActive)
+        {
+            MazeHUD.ShowStatusMessage("Escudo protegeu!");
+            return;
+        }
+        
+        maze.fractionalHealth -= damage;
+        
+        // Se a vida fracionária ficou menor que 1, converter para vida inteira
+        if (maze.fractionalHealth < 1f)
+        {
+            maze.lives--;
+            maze.fractionalHealth += 1f; // Adiciona 1 vida de volta
+            
+            if (maze.lives > 0)
+            {
+                string damageText = damage == 0.5f ? "meio coração" : $"{damage} corações";
+                MazeHUD.ShowStatusMessage($"Você perdeu {damageText}! ({maze.lives} vidas restantes)");
+                
+                // Só respawna se perdeu uma vida inteira
+                MazeGenerationUtils.RegenerateMazeEnsuringPath(maze);
+                MazeEnemyUtils.SpawnEnemies(maze);
+                MazeAdvancedEnemies.InitializeAdvancedEnemies();
+                MazeAdvancedEnemies.SpawnAdvancedEnemies(maze, maze.currentLevel);
+                MazePowerUpUtils.SpawnPowerUps(maze);
+                maze.bullets.Clear();
+                maze.shieldActive = false;
+                maze.shieldTimer = 0f;
+                
+                // Ativar proteção ao respawnar
+                MazePlayerUtils.ActivateSpawnProtection();
+            }
+            else
+            {
+                GameOver(maze);
+            }
+        }
+        else
+        {
+            // Ainda tem vida fracionária, só mostrar mensagem
+            string damageText = damage == 0.5f ? "meio coração" : $"{damage} corações";
+            MazeHUD.ShowStatusMessage($"Você perdeu {damageText}! ({maze.lives} vidas + {maze.fractionalHealth:F1} corações)");
+        }
+    }
 
     public static void GameOver(ProceduralMaze maze)
     {
@@ -145,8 +195,18 @@ public static class MazeGameLoop
                 if (AudioManager.Instance) AudioManager.Instance.PlaySFX(AudioManager.Instance.powerUpSound);
                 break;
             case PowerUpType.Life:
-                maze.lives = Mathf.Min(maze.lives + 1, 9);
-                MazeHUD.ShowStatusMessage("Vida extra!");
+                // Adicionar vida fracionária primeiro
+                if (maze.fractionalHealth < maze.maxFractionalHealth)
+                {
+                    maze.fractionalHealth = Mathf.Min(maze.fractionalHealth + 1f, maze.maxFractionalHealth);
+                    MazeHUD.ShowStatusMessage("Meio coração!");
+                }
+                else
+                {
+                    // Se já tem vida fracionária máxima, adicionar vida inteira
+                    maze.lives = Mathf.Min(maze.lives + 1, 9);
+                    MazeHUD.ShowStatusMessage("Vida extra!");
+                }
                 if (AudioManager.Instance) AudioManager.Instance.PlaySFX(AudioManager.Instance.powerUpSound);
                 break;
             case PowerUpType.Shield:
